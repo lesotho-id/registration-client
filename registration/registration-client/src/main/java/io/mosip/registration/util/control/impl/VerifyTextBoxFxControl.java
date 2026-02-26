@@ -217,10 +217,43 @@ public class VerifyTextBoxFxControl extends TextFieldFxControl {
 
     private String getFieldValue(String fieldId) {
         FxControl fxControl = GenericController.getFxControlMap().get(fieldId);
-        if (fxControl == null || fxControl.getData() == null) {
-            LOGGER.debug("No value found for fieldId={}", fieldId);
+
+        if (fxControl == null) {
+            LOGGER.debug("No FxControl found for fieldId={}", fieldId);
             return null;
         }
-        return fxControl.getData().toString().trim();
+
+        if (!fxControl.isValid()) {
+
+            LOGGER.debug("Field {} is invalid as per schema validation", fieldId);
+            return null;
+        }
+
+        Node node = fxControl.getNode();
+
+        if (node != null) {
+
+            TextField tf = (TextField) node.lookup(".text-field");
+
+            if (tf != null) {
+
+                String value = tf.getText();
+
+                if (value != null && !value.trim().isEmpty()) {
+                    return value.trim();
+                }
+
+                return null;
+            }
+        }
+
+        if (fxControl.getData() != null) {
+
+            String value = fxControl.getData().toString().trim();
+
+            return value.isEmpty() ? null : value;
+        }
+
+        return null;
     }
 }
