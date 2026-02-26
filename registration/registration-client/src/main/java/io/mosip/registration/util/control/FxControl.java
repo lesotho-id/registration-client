@@ -155,6 +155,34 @@ public abstract class FxControl  {
 			}
 		}
 		visible(this.node, isFieldVisible(uiFieldDTO));
+
+		try {
+			boolean isDisabled = requiredFieldValidator
+					.isFieldDisabled(uiFieldDTO, getRegistrationDTo());
+
+			Node fieldNode = getField(uiFieldDTO.getId());
+
+			if (fieldNode != null) {
+
+				disable(fieldNode, isDisabled);
+
+				if (isDisabled) {
+
+					if (fieldNode instanceof javafx.scene.control.ComboBox) {
+						javafx.scene.control.ComboBox<?> combo =
+								(javafx.scene.control.ComboBox<?>) fieldNode;
+
+						combo.getSelectionModel().clearSelection();
+						combo.getStyleClass().remove("demographicComboboxFocused");
+					}
+					getRegistrationDTo().removeDemographicField(uiFieldDTO.getId());
+					getRegistrationDTo().SELECTED_CODES.remove(uiFieldDTO.getId() + "Code");
+				}
+			}
+
+		} catch (Exception e) {
+			LOGGER.error("Error checking disabled for field: " + uiFieldDTO.getId(), e);
+		}
 		setMandatorySuffix(this.node);
 
 	}

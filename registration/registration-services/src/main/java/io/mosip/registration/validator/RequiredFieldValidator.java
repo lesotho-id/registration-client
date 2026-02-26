@@ -190,5 +190,18 @@ public class RequiredFieldValidator {
 		JWTSignatureVerifyResponseDto verifyResponseDto =  signatureService.jwtVerify(jwtSignatureVerifyRequestDto);
 		return verifyResponseDto.isSignatureValid();
 	}
+	public boolean isFieldDisabled(UiFieldDTO schemaField, RegistrationDTO registrationDTO) {
+		boolean disabled = false;
 
+		if (schemaField != null
+				&& schemaField.getDisabled() != null
+				&& "MVEL".equalsIgnoreCase(schemaField.getDisabled().getEngine())
+				&& schemaField.getDisabled().getExpr() != null) {
+
+			disabled = executeMVEL(schemaField.getDisabled().getExpr(), registrationDTO);
+			LOGGER.info("Refreshed {} field disabled : {} ", schemaField.getId(), disabled);
+		}
+
+		return disabled;
+	}
 }

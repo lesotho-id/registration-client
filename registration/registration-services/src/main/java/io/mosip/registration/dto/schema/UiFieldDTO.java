@@ -67,6 +67,8 @@ public class UiFieldDTO {
 	@JsonProperty("verifyEnabled")
 	private boolean verifyEnabled;
 	private String verifyButtonLabel;
+	@JsonProperty("disabled")
+	private RequiredOnExpr disabled;
 
 
 	/**
