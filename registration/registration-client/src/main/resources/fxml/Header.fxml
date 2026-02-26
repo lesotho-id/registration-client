@@ -20,7 +20,7 @@
    <children>
       <ImageView fx:id="mosipLogo" fitHeight="44.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true" GridPane.halignment="LEFT">
          <image>
-            <Image url="@../images/logo-final.png" />
+            <Image url="@../images/logo-final-small5.png" />
          </image>
          <GridPane.margin>
             <Insets left="10.0" />
