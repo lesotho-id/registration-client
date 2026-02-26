@@ -1752,6 +1752,7 @@ public class RegistrationConstants {
 	public static final String UI_SCHEMA_SUBTYPE_FULL_NAME = "name";
 	public static final String UI_SCHEMA_SUBTYPE_EMAIL = "Email";
 	public static final String UI_SCHEMA_SUBTYPE_PHONE = "Phone";
+	public static final String UI_SCHEMA_SUBTYPE_WHATSAPP="Whatsapp";
 	public static final String MVEL_TYPE = "MVEL";
 	public static final String MACHINE_VERIFICATION_SUCCESS = "Machine Verification Success";
 	public static final String UTC_APPENDER = " (UTC)";
@@ -2009,4 +2010,15 @@ public class RegistrationConstants {
 	public static final String DOCUMENT_STORE="docs";
 	// File extension for scanned image files
 	public static final String DOCUMENT_IMAGE_EXTENSION = ".png";
+	/*Primary and secondary verifier as per the id schema and ui spec*/
+	public static final String PRIMARY_VERIFIER="mosip.registration.primary.verifier";
+	public static final String SECONDARY_VERIFIER="mosip.registration.secondary.verifier";
+	/*Verified flag as per the id schema*/
+	public static final String VERIFIED_FLAG="mosip.registration.verified.flag";
+	public static final String AUTH_CLIENT_ID="mosip.registration.auth.client.id";
+	public static final String AUTH_CLIENT_SECRET="mosip.registration.auth.client.secret";
+	public static final String AUTH_APP_ID="mosip.registration.auth.app.id";
+	/*Query Param*/
+	public static final String PARAM_ID="idNumber";
+	public static final String PHONE_NO="phone";
 }

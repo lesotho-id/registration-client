@@ -2826,3 +2826,17 @@ Working on new Css by taleev
 .individual-quality-box {
     -fx-padding: 15 0 0 0;
 }
+
+.verify-button {
+    -fx-background-color: #0B5ED7;
+    -fx-text-fill: white;
+    -fx-padding: 6 18;
+    -fx-min-width: 90px;
+}
+
+.verified-checkbox {
+    -fx-font-weight: bold;
+    -fx-text-fill: #198754;
+    -fx-opacity: 1; /* visible even when disabled */
+    -fx-padding: 0 0 0 10;
+}

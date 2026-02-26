@@ -434,4 +434,8 @@ public class RegistrationUIConstants {
 
 	public static final String INVALID_FLOW_TYPE = "INVALID_FLOW_TYPE";
 	public static final String ADDITIONAL_INFO_REQ_ID_MISSING = "ADDITIONAL_INFO_REQ_ID_MISSING";
+	public static final String INVALID_PHONE="Phone number is either empty or not valid";
+	public static final String INVALID_ID="id number is either empty or not valid";
+	public static final String PHONE_VERIFICATION_FAILED="Mobile number verification failed";
+	public static final String VERIFICATION_ERROR="Verification service error";
 }

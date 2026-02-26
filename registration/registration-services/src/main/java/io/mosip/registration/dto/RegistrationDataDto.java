@@ -10,5 +10,6 @@ public class RegistrationDataDto {
 	private String name;
 	private String email;
 	private String phone;
+	private String whatsappNumber;
 	private String langCode;
 }

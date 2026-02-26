@@ -85,6 +85,7 @@ public class GenericController<uiFieldDTO> extends BaseController {
 	private static final String CONTROLTYPE_DOB = "date";
 	private static final String CONTROLTYPE_DOB_AGE = "ageDate";
 	private static final String CONTROLTYPE_HTML = "html";
+	private static final String CONTROLTYPE_VERIFY_TEXTFIELD = "verifytextbox";
 
 	/**
 	 * Top most Grid pane in FXML
@@ -892,8 +893,13 @@ public class GenericController<uiFieldDTO> extends BaseController {
 
 						if(screenDTO.getName().equals("DemographicDetails")) {
 							fxControl.getNode().getStyleClass().add(RegistrationConstants.DEMOGRAPHIC_FIELD);
-							groupFlowPane.add( fxControl.getNode(), (fieldIndex % 2), (fieldIndex / 2) + 1);
-							fieldIndex++;
+							if (CONTROLTYPE_VERIFY_TEXTFIELD.equalsIgnoreCase(fieldDTO.getControlType())) {
+								groupFlowPane.add(fxControl.getNode(), 0, (fieldIndex / 2) + 1, 2, 1);
+								fieldIndex += 2;
+							}else{
+								groupFlowPane.add(fxControl.getNode(), (fieldIndex % 2), (fieldIndex / 2) + 1);
+								fieldIndex++;
+							}
 						} else {
 							if(screenDTO.getName().equals("Documents")) {
 								fxControl.getNode().getStyleClass().add(RegistrationConstants.DOCUMENT_COMBOBOX_FIELD);
@@ -1070,6 +1076,9 @@ public class GenericController<uiFieldDTO> extends BaseController {
 					break;
 				case CONTROLTYPE_HTML:
 					fxControl = new HtmlFxControl().build(uiFieldDTO);
+					break;
+				case CONTROLTYPE_VERIFY_TEXTFIELD:
+					fxControl = new VerifyTextBoxFxControl().build(uiFieldDTO);
 					break;
 			}
 		}

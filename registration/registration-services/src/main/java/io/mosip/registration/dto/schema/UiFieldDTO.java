@@ -64,6 +64,9 @@ public class UiFieldDTO {
 	@JsonProperty("exceptionPhotoRequired")
 	private boolean isExceptionPhotoRequired;
 	private boolean handle;
+	@JsonProperty("verifyEnabled")
+	private boolean verifyEnabled;
+	private String verifyButtonLabel;
 
 
 	/**
@@ -73,6 +76,12 @@ public class UiFieldDTO {
 	public boolean isExceptionPhotoRequired() {
 		return isExceptionPhotoRequired ||
 				(subType != null && RegistrationConstants.APPLICANT.equalsIgnoreCase(subType));
+	}
+
+	public String getVerifyButtonLabel() {
+		return verifyButtonLabel != null && !verifyButtonLabel.isBlank()
+				? verifyButtonLabel
+				: "Verify";
 	}
 
 }
