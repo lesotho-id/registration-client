@@ -1,32 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.jfoenix.controls.*?>
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane id="loginScreen" prefHeight="553.0" prefWidth="523.0" styleClass="loginBorderPaneStyle" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="io.mosip.registration.controller.auth.LoginController">
+<BorderPane id="loginScreen" prefHeight="553.0" prefWidth="523.0" styleClass="loginBorderPaneStyle" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="io.mosip.registration.controller.auth.LoginController">
   <bottom>
-    <HBox id="footer-section">
+    <HBox id="footer-section" spacing="5" alignment="CENTER_LEFT">
       <children>
         <Label style="-fx-text-fill: white;" text="%mosip.io" />
-        <Label text="  " />
-        <Label style="-fx-text-fill: white;" text="%regClientVersion" />
-        <Label text=" : " />
-        <Label style="-fx-text-fill: white;" fx:id="versionValueLabel" />
+
+        <!-- Bigger + Bold -->
+        <Label style="-fx-text-fill: white;
+                      -fx-font-weight: bold;
+                      -fx-font-size: 16px;"
+               text="%regClientVersion" />
+
+        <Label text=" : " style="-fx-text-fill: white;" />
+
+        <!-- Bigger + Bold -->
+        <Label fx:id="versionValueLabel"
+               style="-fx-text-fill: white;
+                      -fx-font-weight: bold;
+                      -fx-font-size: 16px;" />
       </children>
     </HBox>
   </bottom>
   <right>
-    <AnchorPane fx:id="contentPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="550.0" prefWidth="489.0">
+    <AnchorPane fx:id="contentPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="489.0">
       <children>
-        <AnchorPane fx:id="userIdPane" layoutX="37.0" layoutY="188.0" styleClass="userNameAnchorPaneStyle" visible="true">
+        <AnchorPane fx:id="userIdPane"
+                    layoutX="37.0"
+                    layoutY="188.0"
+                    styleClass="userNameAnchorPaneStyle"
+                    visible="true">
+
           <children>
-            <Label styleClass="higlightedLoginLable" text="%registrationlogin" AnchorPane.leftAnchor="54.0" AnchorPane.topAnchor="20.0" />
-            <TextField fx:id="userId" layoutY="158.0" onAction="#validateUserId" promptText="%withusername" styleClass="loginTextStyle" AnchorPane.leftAnchor="53.0" />
-            <ComboBox fx:id="appLanguage" layoutY="101.0" promptText="%chooselanguage" styleClass="loginCombobox" AnchorPane.leftAnchor="53.0" />
-            <Button fx:id="sub1" layoutX="53.0" layoutY="211.0" mnemonicParsing="false" onAction="#validateUserId" styleClass="loginSubmitStyle" text="%submit" />
-            <ProgressIndicator fx:id="progressIndicator" layoutX="130.0" layoutY="50.0" progress="0.0" visible="false" />
-            <Hyperlink fx:id="forgotUsrnme" layoutX="167.0" layoutY="293.0" mnemonicParsing="false" onAction="#forgotUsrname" styleClass="hyperLinkStyle" text="%forgotUsername" visible="false" />
+
+            <!-- Login Label -->
+            <Label styleClass="higlightedLoginLable"
+                   text="%registrationlogin"
+                   style="-fx-font-size: 30px;"
+                   AnchorPane.leftAnchor="35.0"
+                   AnchorPane.topAnchor="20.0" />
+
+            <!-- Language ComboBox -->
+            <ComboBox fx:id="appLanguage"
+                      promptText="%chooselanguage"
+                      styleClass="loginCombobox"
+                      AnchorPane.leftAnchor="53.0"
+                      AnchorPane.topAnchor="60.0" />
+
+            <!-- UserId TextField (Reduced Gap) -->
+            <TextField fx:id="userId"
+                       onAction="#validateUserId"
+                       promptText="%withusername"
+                       styleClass="loginTextStyle"
+                       AnchorPane.leftAnchor="53.0"
+                       AnchorPane.topAnchor="110.0" />
+
+            <!-- Submit Button -->
+            <Button fx:id="sub1"
+                    mnemonicParsing="false"
+                    onAction="#validateUserId"
+                    styleClass="loginSubmitStyle"
+                    text="%submit"
+                    AnchorPane.leftAnchor="53.0"
+                    AnchorPane.topAnchor="180.0" />
+
+            <ProgressIndicator fx:id="progressIndicator"
+                               layoutX="130.0"
+                               layoutY="50.0"
+                               progress="0.0"
+                               visible="false" />
+
+            <Hyperlink fx:id="forgotUsrnme"
+                       mnemonicParsing="false"
+                       onAction="#forgotUsrname"
+                       styleClass="hyperLinkStyle"
+                       text="%forgotUsername"
+                       visible="false"
+                       AnchorPane.leftAnchor="167.0"
+                       AnchorPane.topAnchor="210.0" />
+
           </children>
         </AnchorPane>
         <AnchorPane fx:id="credentialsPane" layoutX="37.0" layoutY="188.0" styleClass="loginAnchorPaneExtendedStyle" visible="false">
@@ -103,18 +169,58 @@
     </AnchorPane>
   </right>
   <top>
-    <HBox id="header-section" prefHeight="27.0" prefWidth="523.0">
-      <children>
-        <AnchorPane prefHeight="27.0" prefWidth="71.0">
+    <BorderPane prefHeight="80.0" prefWidth="523.0"
+                style="-fx-background-color: white; -fx-padding: 0 40 0 40;">
+
+      <!-- Left Logo -->
+      <left>
+        <HBox alignment="CENTER_LEFT">
           <children>
-            <ImageView fx:id="mosipLogoImageView" fitHeight="54.0" fitWidth="50.0" layoutX="20.0" layoutY="2.0">
+            <ImageView fx:id="mosipLogoImageView"
+                       fitHeight="70.0"
+                       preserveRatio="true">
               <image>
-                <Image url="@../images/logo-final.png" />
+                <Image url="@../images/logo-final6.png" />
               </image>
             </ImageView>
           </children>
-        </AnchorPane>
-      </children>
-    </HBox>
+        </HBox>
+      </left>
+
+      <!-- Center Title -->
+      <center>
+        <HBox alignment="CENTER" spacing="20">
+          <children>
+            <!-- DIGITAL in Blue -->
+            <Label text="D I G I T A L"
+                   style="-fx-font-size: 26px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #1565C0;" />
+
+            <!-- CREDENTIALS in Green -->
+            <Label text="C R E D E N T I A L S"
+                   style="-fx-font-size: 26px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #1E8E7E;" />
+          </children>
+        </HBox>
+      </center>
+
+      <!-- Right Flag -->
+      <right>
+        <HBox alignment="CENTER_RIGHT">
+          <children>
+            <ImageView fx:id="flagImageView"
+                       fitHeight="70.0"
+                       preserveRatio="true">
+              <image>
+                <Image url="@../images/flag.jpg" />
+              </image>
+            </ImageView>
+          </children>
+        </HBox>
+      </right>
+
+    </BorderPane>
   </top>
 </BorderPane>
