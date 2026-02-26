@@ -29,6 +29,7 @@ public class PacketStatusDTO {
 	private String name;
 	private String phone;
 	private String email;
+	private String whatsappNumber;
 	private String userId;
 	private String selectedLanguages;
 }

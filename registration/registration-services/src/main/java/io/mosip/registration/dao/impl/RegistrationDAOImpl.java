@@ -112,11 +112,12 @@ public class RegistrationDAOImpl implements RegistrationDAO {
 
 			Object emailObj = registrationDTO.getDemographics().get(getKey(registrationDTO, RegistrationConstants.UI_SCHEMA_SUBTYPE_EMAIL));
 			Object phoneObj = registrationDTO.getDemographics().get(getKey(registrationDTO, RegistrationConstants.UI_SCHEMA_SUBTYPE_PHONE));
-			
+			Object whatsappObj=registrationDTO.getDemographics().get(getKey(registrationDTO, RegistrationConstants.UI_SCHEMA_SUBTYPE_WHATSAPP));
 			fullName.removeIf(Objects::isNull);
 			registrationDataDto.setName(String.join(RegistrationConstants.SPACE, fullName));
 			registrationDataDto.setEmail(getAdditionalInfo(emailObj));
 			registrationDataDto.setPhone(getAdditionalInfo(phoneObj));
+			registrationDataDto.setWhatsappNumber(getAdditionalInfo(whatsappObj));
 			registrationDataDto.setLangCode(String.join(RegistrationConstants.COMMA,
 					registrationDTO.getSelectedLanguagesByApplicant()));
 			

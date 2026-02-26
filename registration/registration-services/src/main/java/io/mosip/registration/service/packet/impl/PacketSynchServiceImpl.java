@@ -293,6 +293,7 @@ public class PacketSynchServiceImpl extends BaseService implements PacketSynchSe
 					syncDto.setName(registrationDataDto.getName());
 					syncDto.setPhone(registrationDataDto.getPhone());
 					syncDto.setEmail(registrationDataDto.getEmail());
+					syncDto.setWhatsappNumber(registrationDataDto.getWhatsappNumber());
 					syncDto.setLangCode(registrationDataDto.getLangCode() != null ?
 							registrationDataDto.getLangCode().split(",")[0] :
 							ApplicationContext.applicationLanguage());
