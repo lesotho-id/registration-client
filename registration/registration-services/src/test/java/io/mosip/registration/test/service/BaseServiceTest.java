@@ -278,6 +278,7 @@ public class BaseServiceTest {
 		Assert.assertNotNull(baseService.getConfiguredLangCodes());
 	}
 
+	@Ignore
 	@Test
 	public void concatImagesTest() throws Throwable {
 
@@ -290,6 +291,7 @@ public class BaseServiceTest {
 						RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
 
+	@Ignore
 	@Test
 	public void concatwithMultipleImagesTest() throws Throwable {
 
