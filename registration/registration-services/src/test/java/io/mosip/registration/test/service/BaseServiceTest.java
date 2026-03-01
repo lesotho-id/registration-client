@@ -289,6 +289,12 @@ public class BaseServiceTest {
 		Mockito.when(ImageIO.read(Mockito.any(java.io.InputStream.class)))
 				.thenReturn(image);
 
+		Mockito.when(ImageIO.read(Mockito.any(java.io.File.class)))
+				.thenReturn(image);
+
+		Mockito.when(ImageIO.read(Mockito.any(java.net.URL.class)))
+				.thenReturn(image);
+
 		Assert.assertNotNull(
 				baseService.concatImages(
 						null,
@@ -307,6 +313,12 @@ public class BaseServiceTest {
 		Mockito.when(ImageIO.read(Mockito.any(java.io.InputStream.class)))
 				.thenReturn(image);
 
+		Mockito.when(ImageIO.read(Mockito.any(java.io.File.class)))
+				.thenReturn(image);
+
+		Mockito.when(ImageIO.read(Mockito.any(java.net.URL.class)))
+				.thenReturn(image);
+
 		Assert.assertNotNull(
 				baseService.concatImages(
 						null,
@@ -315,7 +327,6 @@ public class BaseServiceTest {
 						null,
 						RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
-
 	@Test
 	public void concatImagesNotNullTest() throws Throwable, IOException {
 		byte[] image1 = "image1".getBytes();
