@@ -277,23 +277,43 @@ public class BaseServiceTest {
 	public void getConfiguredLangCodesTest() throws Throwable,IOException  {
 		Assert.assertNotNull(baseService.getConfiguredLangCodes());
 	}
-	
+
 	@Test
-	public void concatImagesTest() throws Throwable,IOException  {
-		BufferedImage image = getBufferedScannedImage();
-        PowerMockito.mockStatic(ImageIO.class);
-		when(ImageIO.read(
-				baseService.getClass().getResourceAsStream(RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH))).thenReturn(image);
-		Assert.assertNotNull(baseService.concatImages(null, null,RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
+	public void concatImagesTest() throws Throwable {
+
+		BufferedImage image =
+				new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+
+		PowerMockito.mockStatic(ImageIO.class);
+
+		Mockito.when(ImageIO.read(Mockito.any(java.io.InputStream.class)))
+				.thenReturn(image);
+
+		Assert.assertNotNull(
+				baseService.concatImages(
+						null,
+						null,
+						RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
 
 	@Test
-	public void concatwithMultipleImagesTest() throws Throwable,IOException  {		
-		BufferedImage image = getBufferedScannedImage();
-        PowerMockito.mockStatic(ImageIO.class);
-		when(ImageIO.read(
-				baseService.getClass().getResourceAsStream(RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH))).thenReturn(image);
-		Assert.assertNotNull(baseService.concatImages(null, null,null, null,RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
+	public void concatwithMultipleImagesTest() throws Throwable {
+
+		BufferedImage image =
+				new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+
+		PowerMockito.mockStatic(ImageIO.class);
+
+		Mockito.when(ImageIO.read(Mockito.any(java.io.InputStream.class)))
+				.thenReturn(image);
+
+		Assert.assertNotNull(
+				baseService.concatImages(
+						null,
+						null,
+						null,
+						null,
+						RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
 
 	@Test
