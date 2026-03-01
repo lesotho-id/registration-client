@@ -475,7 +475,7 @@
 		<dependency>
 			<groupId>io.mosip.registration</groupId>
 			<artifactId>registration-api-stub-impl</artifactId>
-			<version>${mosip.core.kernel.version}</version>
+			<version>1.2.0.2</version>
 		</dependency>
 
 		<dependency>

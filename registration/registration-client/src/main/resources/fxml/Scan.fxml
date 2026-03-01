@@ -118,7 +118,7 @@
                      <children>
                         <GridPane alignment="CENTER_RIGHT" hgap="20.0" vgap="20.0" GridPane.rowIndex="2">
                            <children>
-                              <Button fx:id="streamBtn" graphicTextGap="10.0" mnemonicParsing="false" onAction="#stream" styleClass="scanButton" text="%stream">
+                              <Button fx:id="streamBtn" graphicTextGap="10.0" mnemonicParsing="false" onAction="#stream" styleClass="scanButton" text="%stream" disable="true">
                                  <graphic>
                                     <ImageView fx:id="streamImageView" fitHeight="14.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                                        <image>
