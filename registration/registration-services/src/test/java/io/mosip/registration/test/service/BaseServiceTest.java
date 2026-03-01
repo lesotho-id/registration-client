@@ -281,50 +281,26 @@ public class BaseServiceTest {
 	@Test
 	public void concatImagesTest() throws Throwable {
 
-		BufferedImage image =
-				new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
-
-		PowerMockito.mockStatic(ImageIO.class);
-
-		Mockito.when(ImageIO.read(Mockito.any(java.io.InputStream.class)))
-				.thenReturn(image);
-
-		Mockito.when(ImageIO.read(Mockito.any(java.io.File.class)))
-				.thenReturn(image);
-
-		Mockito.when(ImageIO.read(Mockito.any(java.net.URL.class)))
-				.thenReturn(image);
+		byte[] dummy = "dummy".getBytes();
 
 		Assert.assertNotNull(
 				baseService.concatImages(
-						null,
-						null,
+						dummy,
+						dummy,
 						RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
 
 	@Test
 	public void concatwithMultipleImagesTest() throws Throwable {
 
-		BufferedImage image =
-				new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
-
-		PowerMockito.mockStatic(ImageIO.class);
-
-		Mockito.when(ImageIO.read(Mockito.any(java.io.InputStream.class)))
-				.thenReturn(image);
-
-		Mockito.when(ImageIO.read(Mockito.any(java.io.File.class)))
-				.thenReturn(image);
-
-		Mockito.when(ImageIO.read(Mockito.any(java.net.URL.class)))
-				.thenReturn(image);
+		byte[] dummy = "dummy".getBytes();
 
 		Assert.assertNotNull(
 				baseService.concatImages(
-						null,
-						null,
-						null,
-						null,
+						dummy,
+						dummy,
+						dummy,
+						dummy,
 						RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
 	@Test
