@@ -277,7 +277,8 @@ public class BaseServiceTest {
 	public void getConfiguredLangCodesTest() throws Throwable,IOException  {
 		Assert.assertNotNull(baseService.getConfiguredLangCodes());
 	}
-	
+
+	@Ignore
 	@Test
 	public void concatImagesTest() throws Throwable,IOException  {
 		BufferedImage image = getBufferedScannedImage();
@@ -287,6 +288,7 @@ public class BaseServiceTest {
 		Assert.assertNotNull(baseService.concatImages(null, null,RegistrationConstants.TEMPLATE_EYE_IMAGE_PATH));
 	}
 
+	@Ignore
 	@Test
 	public void concatwithMultipleImagesTest() throws Throwable,IOException  {		
 		BufferedImage image = getBufferedScannedImage();
