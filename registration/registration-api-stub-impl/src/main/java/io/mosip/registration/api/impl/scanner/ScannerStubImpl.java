@@ -25,8 +25,8 @@ public class ScannerStubImpl implements DocScannerService {
     private static int index = 0;
 
     static {
-        DOC_STUB_PATHS.add("/images/morena_img.BMP");
-        DOC_STUB_PATHS.add("/images/stubdoc.png");
+        DOC_STUB_PATHS.add("/images/morena_img.jpg");
+        DOC_STUB_PATHS.add("/images/stubdoc.jpg");
 
     }
 
