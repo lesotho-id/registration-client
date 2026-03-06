@@ -198,7 +198,7 @@
                           -fx-text-fill: #1565C0;" />
 
             <!-- CREDENTIALS in Green -->
-            <Label text="C R E D E N T I A L S"
+            <Label text="C R E D E N T I A L "
                    style="-fx-font-size: 26px;
                           -fx-font-weight: bold;
                           -fx-text-fill: #1E8E7E;" />
