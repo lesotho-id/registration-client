@@ -110,7 +110,7 @@ public class MobileVerificationService {
     /**
      * Call Mobile Verify API
      */
-    private boolean callVerifyApi(String id, String phone,boolean isCitizen) {
+    private boolean callVerifyApi(String id, String phone, boolean isCitizen) {
 
         try {
 
@@ -121,13 +121,14 @@ public class MobileVerificationService {
                     .queryParam("isCitizen", isCitizen)
                     .toUriString();
 
+            LOGGER.info("Calling Mobile Verify API with URL: {}", url);
+            LOGGER.debug("Verify parameters -> idNumber={}, phone={}, isCitizen={}",
+                    id, phone, isCitizen);
+
             HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Collections.singletonList(
-                    MediaType.APPLICATION_JSON));
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
             HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-            LOGGER.info("Calling Verify API URL: {}", url);
 
             ResponseEntity<String> response =
                     restTemplate.exchange(
@@ -137,13 +138,22 @@ public class MobileVerificationService {
                             String.class
                     );
 
-            LOGGER.info("Verify response code: {}",
-                    response.getStatusCodeValue());
+            LOGGER.info("Verify API HTTP status: {}", response.getStatusCodeValue());
+            LOGGER.debug("Verify API response body: {}", response.getBody());
 
-            return response.getStatusCode() == HttpStatus.OK;
+            if (response.getBody() != null &&
+                    response.getBody().contains("\"status\":\"SUCCESS\"")) {
+
+                LOGGER.info("Mobile verification SUCCESS for idNumber={}", id);
+                return true;
+            }
+
+            LOGGER.warn("Mobile verification FAILED for idNumber={}", id);
+            return false;
 
         } catch (Exception e) {
-            LOGGER.error("Verify API error", e);
+
+            LOGGER.error("Error while calling Mobile Verify API", e);
             return false;
         }
     }
