@@ -29,10 +29,10 @@ public class MobileVerificationService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    public boolean verify(String id, String phone) {
+    public boolean verify(String id, String phone,boolean isCitizen) {
 
-        LOGGER.info("Verifying mobile -> ID: {}, Phone: {}",
-                id, phone);
+        LOGGER.info("Verifying mobile -> ID: {}, Phone: {}, isCitizen: {}",
+                id, phone, isCitizen);
 
         try {
 
@@ -41,7 +41,7 @@ public class MobileVerificationService {
                 return false;
             }
 
-            return callVerifyApi(id, phone);
+            return callVerifyApi(id, phone,isCitizen);
 
         } catch (Exception e) {
             LOGGER.error("Mobile verification error", e);
@@ -110,7 +110,7 @@ public class MobileVerificationService {
     /**
      * Call Mobile Verify API
      */
-    private boolean callVerifyApi(String id, String phone) {
+    private boolean callVerifyApi(String id, String phone,boolean isCitizen) {
 
         try {
 
@@ -118,6 +118,7 @@ public class MobileVerificationService {
                     .fromHttpUrl(verifyUrl)
                     .queryParam(RegistrationConstants.PARAM_ID, id)
                     .queryParam(RegistrationConstants.PHONE_NO, phone)
+                    .queryParam("isCitizen", isCitizen)
                     .toUriString();
 
             HttpHeaders headers = new HttpHeaders();

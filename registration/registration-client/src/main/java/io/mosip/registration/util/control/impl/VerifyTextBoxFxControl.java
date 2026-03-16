@@ -113,10 +113,29 @@ public class VerifyTextBoxFxControl extends TextFieldFxControl {
                     io.mosip.registration.context.ApplicationContext.getStringValueFromApplicationMap(
                             RegistrationConstants.SECONDARY_VERIFIER);
 
+            String residenceFieldId = "residenceStatus";
+
+            LOGGER.info("Residence fieldId used: {}", residenceFieldId);
+
             String phone = getFieldValue(primaryFieldId);
             String idNumber = getFieldValue(secondaryFieldId);
+            String residenceStatus = getFieldValue(residenceFieldId);
 
-            LOGGER.debug("Verification inputs -> phone={}, nationalId={}", phone, idNumber);
+            LOGGER.info("Phone value received from UI: {}", phone);
+            LOGGER.info("ID Number received from UI: {}", idNumber);
+            LOGGER.info("Residence Status received from UI: '{}'", residenceStatus);
+
+            final boolean isCitizen =
+                    residenceStatus != null &&
+                            residenceStatus.contains("code=CTZ");
+
+            LOGGER.info("Raw residenceStatus object: {}", residenceStatus);
+            LOGGER.info("Computed isCitizen value: {}", isCitizen);
+
+            LOGGER.debug(
+                    "Verification inputs -> phone={}, id={}, residenceStatus={}, isCitizen={}",
+                    phone, idNumber, residenceStatus, isCitizen
+            );
 
             if (phone == null || phone.isBlank()) {
                 validation.generateAlert(
@@ -138,8 +157,14 @@ public class VerifyTextBoxFxControl extends TextFieldFxControl {
             Task<Boolean> verificationTask = new Task<>() {
                 @Override
                 protected Boolean call() {
+
                     LOGGER.info("Calling mobile verification service");
-                    return mobileVerificationService.verify(idNumber, phone);
+
+                    return mobileVerificationService.verify(
+                            idNumber,
+                            phone,
+                            isCitizen
+                    );
                 }
             };
 
@@ -200,60 +225,69 @@ public class VerifyTextBoxFxControl extends TextFieldFxControl {
                     value,
                     Boolean.class.getName()
             );
-
             regDTO.getDemographics()
                     .put(io.mosip.registration.context.ApplicationContext.getStringValueFromApplicationMap(
                             RegistrationConstants.VERIFIED_FLAG), value);
-
         } else {
-
             LOGGER.error(
                     "RegistrationDTO or demographics map is null while setting isVerified"
             );
         }
     }
+private String getFieldValue(String fieldId) {
 
+    FxControl fxControl = GenericController.getFxControlMap().get(fieldId);
 
-
-    private String getFieldValue(String fieldId) {
-        FxControl fxControl = GenericController.getFxControlMap().get(fieldId);
-
-        if (fxControl == null) {
-            LOGGER.debug("No FxControl found for fieldId={}", fieldId);
-            return null;
-        }
-
-        if (!fxControl.isValid()) {
-
-            LOGGER.debug("Field {} is invalid as per schema validation", fieldId);
-            return null;
-        }
-
-        Node node = fxControl.getNode();
-
-        if (node != null) {
-
-            TextField tf = (TextField) node.lookup(".text-field");
-
-            if (tf != null) {
-
-                String value = tf.getText();
-
-                if (value != null && !value.trim().isEmpty()) {
-                    return value.trim();
-                }
-
-                return null;
-            }
-        }
-
-        if (fxControl.getData() != null) {
-
-            String value = fxControl.getData().toString().trim();
-
-            return value.isEmpty() ? null : value;
-        }
-
+    if (fxControl == null) {
+        LOGGER.debug("No FxControl found for fieldId={}", fieldId);
         return null;
     }
+
+    if (!fxControl.isValid()) {
+        LOGGER.debug("Field {} is invalid as per schema validation", fieldId);
+        return null;
+    }
+
+    Node node = fxControl.getNode();
+
+    if (node != null) {
+
+        // Handle TextField
+        TextField tf = (TextField) node.lookup(".text-field");
+
+        if (tf != null) {
+
+            String value = tf.getText();
+
+            if (value != null && !value.trim().isEmpty()) {
+                return value.trim();
+            }
+
+            return null;
+        }
+
+        // ⭐ ADD THIS BLOCK FOR COMBOBOX (Resident Status)
+        ComboBox<?> comboBox = (ComboBox<?>) node.lookup(".combo-box");
+
+        if (comboBox != null && comboBox.getValue() != null) {
+
+            String value = comboBox.getValue().toString();
+
+            if (!value.trim().isEmpty()) {
+                return value.trim();
+            }
+
+            return null;
+        }
+    }
+
+    // fallback if control stores value internally
+    if (fxControl.getData() != null) {
+
+        String value = fxControl.getData().toString().trim();
+
+        return value.isEmpty() ? null : value;
+    }
+    return null;
+}
 }
