@@ -674,7 +674,13 @@ public class GenericBiometricsController extends BaseController {
 				case FINGERPRINT_SLAB_RIGHT:
 				case FINGERPRINT_SLAB_THUMBS:
 
-					for(BiometricsDto dto : biometricsDtos) {
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Processing FINGERPRINT slab for modality: {}", modalityName);
+                    for(BiometricsDto dto : biometricsDtos) {
+                        LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Decoding finger ISO: attribute = {}, SBIScore = {}, SDKScore = {}, isoByteLength = {}",
+                                dto.getBioAttribute(),
+                                dto.getQualityScore(),
+                                dto.getSdkScore(),
+                                dto.getAttributeISO() != null ? dto.getAttributeISO().length : 0);
 						ConvertRequestDto convertRequestDto = new ConvertRequestDto();
 						convertRequestDto.setVersion("ISO19794_4_2011");
 						convertRequestDto.setInputBytes(dto.getAttributeISO());
@@ -682,19 +688,31 @@ public class GenericBiometricsController extends BaseController {
 								fieldId, dto.getBioAttribute(), retry),
 								FingerDecoder.convertFingerISOToImageBytes(convertRequestDto));
 						getRegistrationDTOFromSession().INDIVIDUAL_BIO_SCORE.put(String.format("%s_%s_%s",
-								fieldId, dto.getBioAttribute(), retry), dto.getQualityScore());
+                                fieldId, dto.getBioAttribute(), retry), isUseSdkQualityScoreEnabled()
+                                ? dto.getSdkScore()
+                                : dto.getQualityScore());
 						score += dto.getQualityScore();
 						sdkScore += dto.getSdkScore();
 					}
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Fingerprint slab total raw score: {}, total sdkScore: {}, count: {}",
+                            score, sdkScore, biometricsDtos.size());
 					getRegistrationDTOFromSession().BIO_SCORES.put(String.format("%s_%s_%s",
 							fieldId, modalityName.name(), retry),
 							score / biometricsDtos.size());
 					getRegistrationDTOFromSession().SDK_SCORES.put(String.format("%s_%s_%s",
 							fieldId, modalityName.name(), retry),
 							sdkScore / biometricsDtos.size());
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Fingerprint average cached: avgBioScore = {}, avgSdkScore = {}",
+                            (score / biometricsDtos.size()), (sdkScore / biometricsDtos.size()));
 					break;
 				case IRIS_DOUBLE:
-					for(BiometricsDto dto : biometricsDtos) {
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Processing IRIS_DOUBLE");
+                    for(BiometricsDto dto : biometricsDtos) {
+                        LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Decoding iris ISO: attribute = {}, SBIScore = {}, SDKScore = {}, isoByteLength = {}",
+                                dto.getBioAttribute(),
+                                dto.getQualityScore(),
+                                dto.getSdkScore(),
+                                dto.getAttributeISO() != null ? dto.getAttributeISO().length : 0);
 						ConvertRequestDto convertRequestDto = new ConvertRequestDto();
 						convertRequestDto.setVersion("ISO19794_6_2011");
 						convertRequestDto.setInputBytes(dto.getAttributeISO());
@@ -702,21 +720,33 @@ public class GenericBiometricsController extends BaseController {
 								fieldId, dto.getBioAttribute(), retry),
 								IrisDecoder.convertIrisISOToImageBytes(convertRequestDto));
 						getRegistrationDTOFromSession().INDIVIDUAL_BIO_SCORE.put(String.format("%s_%s_%s",
-								fieldId, dto.getBioAttribute(), retry), dto.getQualityScore());
+                                fieldId, dto.getBioAttribute(), retry),isUseSdkQualityScoreEnabled()
+                                ? dto.getSdkScore()
+                                : dto.getQualityScore());
 						score += dto.getQualityScore();
 						sdkScore += dto.getSdkScore();
 					}
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Iris total raw score: {}, total sdkScore: {}, count: {}",
+                            score, sdkScore, biometricsDtos.size());
 					getRegistrationDTOFromSession().BIO_SCORES.put(String.format("%s_%s_%s",
 							fieldId, modalityName.name(), retry),
 							score / biometricsDtos.size());
 					getRegistrationDTOFromSession().SDK_SCORES.put(String.format("%s_%s_%s",
 							fieldId, modalityName.name(), retry),
 							sdkScore / biometricsDtos.size());
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Iris average cached: avgBioScore = {}, avgSdkScore = {}",
+                            (score / biometricsDtos.size()), (sdkScore / biometricsDtos.size()));
 					break;
 
 				case EXCEPTION_PHOTO:
 				case FACE:
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Processing FACE/EXCEPTION_PHOTO modality: {}", modalityName);
 					BiometricsDto faceDto = biometricsDtos.toArray(new BiometricsDto[0])[0];
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Face DTO: SBIScore = {}, SDKScore = {}, attribute = {}, isoByteLength = {}",
+                            faceDto.getQualityScore(),
+                            faceDto.getSdkScore(),
+                            modalityName.getAttributes().get(0),
+                            faceDto.getAttributeISO() != null ? faceDto.getAttributeISO().length : 0);
 					ConvertRequestDto convertRequestDto = new ConvertRequestDto();
 					convertRequestDto.setVersion("ISO19794_5_2011");
 					convertRequestDto.setInputBytes(faceDto.getAttributeISO());
@@ -724,13 +754,17 @@ public class GenericBiometricsController extends BaseController {
 							fieldId, modalityName.getAttributes().get(0), retry),
 							FaceDecoder.convertFaceISOToImageBytes(convertRequestDto));
 					getRegistrationDTOFromSession().INDIVIDUAL_BIO_SCORE.put(String.format("%s_%s_%s",
-							fieldId, modalityName.getAttributes().get(0), retry), faceDto.getQualityScore());
+                            fieldId, modalityName.getAttributes().get(0), retry),isUseSdkQualityScoreEnabled()
+							? faceDto.getSdkScore()
+							: faceDto.getQualityScore());
 					getRegistrationDTOFromSession().BIO_SCORES.put(String.format("%s_%s_%s",
 							fieldId, modalityName.name(), retry),
 							faceDto.getQualityScore());
 					getRegistrationDTOFromSession().SDK_SCORES.put(String.format("%s_%s_%s",
 							fieldId, modalityName.name(), retry),
 							faceDto.getSdkScore());
+                    LOGGER.info("DEBUG addStreamImageAndScoreToCache -> Face scores cached: bioScore = {}, sdkScore = {}",
+                            faceDto.getQualityScore(), faceDto.getSdkScore());
 					break;
 			}
 		} catch (Exception exception) {
@@ -954,22 +988,34 @@ public class GenericBiometricsController extends BaseController {
 	 * @param retry          retrycount
 	 * @param thresholdValue threshold value
 	 */
+
+    @Value("${" + RegistrationConstants.UPDATE_SDK_QUALITY_SCORE + ":N}")
+    private String useSdkQualityScore;
+
+    private boolean isUseSdkQualityScoreEnabled() {
+        return RegistrationConstants.ENABLE.equalsIgnoreCase(useSdkQualityScore);
+    }
+
+
 	private void setCapturedValues(double qltyScore, double sdkScore, int retry, double thresholdValue) {
 
 		LOGGER.info("Updating captured values of biometrics");
+        double selectedScore = isQualityCheckWithSdkEnabled() && isUseSdkQualityScoreEnabled()
+                ? sdkScore
+                : qltyScore;
 
 		biometricPane.getStyleClass().clear();
 		biometricPane.getStyleClass().add(RegistrationConstants.FINGERPRINT_PANES_SELECTED);
 		qualityScore.setText(getQualityScoreText(qltyScore));
 		bioProgress.setProgress(
-				Double.valueOf(getQualityScoreText(qltyScore).split(RegistrationConstants.PERCENTAGE)[0]) / 100);
-		qualityText.setText(getQualityScoreText(qltyScore));
+                Double.valueOf(getQualityScoreText(selectedScore).split(RegistrationConstants.PERCENTAGE)[0]) / 100);
+        qualityText.setText(getQualityScoreText(selectedScore));
 		sdkQualityText.setText(getQualityScoreText(sdkScore));
 
 		retry = retry == 0 ? 1 : retry;
 		clearAttemptsBox(thresholdValue, retry);
 
-		if (Double.valueOf(getQualityScoreText(qltyScore).split(RegistrationConstants.PERCENTAGE)[0]) >= thresholdValue) {
+        if (Double.valueOf(getQualityScoreText(selectedScore).split(RegistrationConstants.PERCENTAGE)[0]) >= thresholdValue) {
 			bioProgress.getStyleClass().removeAll(RegistrationConstants.PROGRESS_BAR_RED);
 			bioProgress.getStyleClass().add(RegistrationConstants.PROGRESS_BAR_GREEN);
 			qualityText.getStyleClass().removeAll(RegistrationConstants.LABEL_RED);

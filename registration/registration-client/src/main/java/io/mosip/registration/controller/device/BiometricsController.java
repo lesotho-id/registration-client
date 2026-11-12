@@ -20,6 +20,7 @@ import java.util.ResourceBundle;
 
 import org.mvel2.MVEL;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 
 import io.mosip.biometrics.util.ConvertRequestDto;
@@ -75,6 +76,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.Priority;
+import java.util.Collection;
 /**
  * {@code GuardianBiometricscontroller} is to capture and display the captured
  * biometrics of Guardian
@@ -105,6 +110,8 @@ public class BiometricsController extends BaseController /* implements Initializ
 	@FXML
 	private Label qualityScore;
 
+    @FXML
+    private Label sdkQualityText;
 //	@FXML
 //	private Label attemptSlap;
 	
@@ -181,6 +188,10 @@ public class BiometricsController extends BaseController /* implements Initializ
 	private static Map<String, byte[]> STREAM_IMAGES = new HashMap<String, byte[]>();
 
 	private static Map<String, Double> BIO_SCORES = new HashMap<String, Double>();
+
+    private static Map<String, Double> SDK_SCORES = new HashMap<String, Double>();
+
+    private static Map<String, Double> INDIVIDUAL_BIO_SCORE = new HashMap<String, Double>();
 
 	public ImageView getBiometricImage() {
 		return biometricImage;
@@ -310,8 +321,8 @@ public class BiometricsController extends BaseController /* implements Initializ
 				"populateBiometricPage invoked, isUserOnboard : " + isUserOnboard);
 
 		if(isUserOnboard) {
-			attemptsLabel.setVisible(false);
-			bioRetryBox.setVisible(false);
+            attemptsLabel.setVisible(true);
+            bioRetryBox.setVisible(true);
 //			attemptsLabel1.setVisible(false);
 //			exceptionsLabel.setVisible(false);
 //			attemptSlap.setVisible(false);
@@ -667,6 +678,7 @@ public class BiometricsController extends BaseController /* implements Initializ
 		LOGGER.info(LOG_REG_BIOMETRIC_CONTROLLER, APPLICATION_NAME, APPLICATION_ID, "Displaying biometrics to capture");
 
 		retryBox.setVisible(true);
+        thresholdBox.setVisible(!isExceptionPhoto(modality) && isQualityCheckWithSdkEnabled());
 		biometricBox.setVisible(true);
 		biometricType.setText(applicationLabelBundle.getString(modality));
 
@@ -1130,7 +1142,11 @@ public class BiometricsController extends BaseController /* implements Initializ
 					}
 					LOGGER.info("Adding streaming images and bio scores into local map");
 
-					addStreamImageAndScoreToCache(registrationDTOBiometricsList, currentModality, registrationDTOBiometricsList.get(0).getNumOfRetries());
+					addStreamImageAndScoreToCache(
+					        currentSubType,
+					        Modality.valueOf(currentModality),
+					        registrationDTOBiometricsList,
+					        registrationDTOBiometricsList.get(0).getNumOfRetries());
 					
 					LOGGER.info(LOG_REG_BIOMETRIC_CONTROLLER, APPLICATION_NAME, APPLICATION_ID,
 							"using captured response fill the fields like quality score and progress bar,,etc,.. UI");
@@ -1138,6 +1154,10 @@ public class BiometricsController extends BaseController /* implements Initializ
 					loadBiometricsUIElements(registrationDTOBiometricsList, currentSubType,
 							currentModality);
 
+					displayIndividualBioScore(
+					        currentSubType,
+					        Modality.valueOf(currentModality),
+					        registrationDTOBiometricsList.get(0).getNumOfRetries());
 					refreshContinueButton();
 					
 					generateAlert(RegistrationConstants.ALERT_INFORMATION,
@@ -1159,54 +1179,256 @@ public class BiometricsController extends BaseController /* implements Initializ
 
 	}
 
-	private void addStreamImageAndScoreToCache(List<BiometricsDto> biometricsDtos, String modalityName, int retry) throws Exception {
-		try {
-			double score = 0;
-			switch (modalityName) {
-				case RegistrationConstants.FINGERPRINT_SLAB_LEFT:
-				case RegistrationConstants.FINGERPRINT_SLAB_RIGHT:
-				case RegistrationConstants.FINGERPRINT_SLAB_THUMBS:
-					for(BiometricsDto dto : biometricsDtos) {
-						ConvertRequestDto convertRequestDto = new ConvertRequestDto();
-						convertRequestDto.setVersion("ISO19794_4_2011");
-						convertRequestDto.setInputBytes(dto.getAttributeISO());
-						STREAM_IMAGES.put(String.format("%s_%s_%s",
-								currentSubType, dto.getBioAttribute(), String.valueOf(retry)),
-								FingerDecoder.convertFingerISOToImageBytes(convertRequestDto));
-						score += dto.getQualityScore();
-					}
-					BIO_SCORES.put(String.format("%s_%s_%s",
-							currentSubType, modalityName, String.valueOf(retry)),
-							score / biometricsDtos.size());
-					break;
-				case RegistrationConstants.IRIS_DOUBLE:
-					for(BiometricsDto dto : biometricsDtos) {
-						ConvertRequestDto convertRequestDto = new ConvertRequestDto();
-						convertRequestDto.setVersion("ISO19794_6_2011");
-						convertRequestDto.setInputBytes(dto.getAttributeISO());
-						STREAM_IMAGES.put(String.format("%s_%s_%s",
-								currentSubType, dto.getBioAttribute(), String.valueOf(retry)),
-								IrisDecoder.convertIrisISOToImageBytes(convertRequestDto));
-						score += dto.getQualityScore();
-					}
-					BIO_SCORES.put(String.format("%s_%s_%s",
-							currentSubType, modalityName, String.valueOf(retry)),
-							score / biometricsDtos.size());
-					break;
+    private final Map<String, Double> MDS_SCORES = new HashMap<>();
 
-				case RegistrationConstants.FACE:
-					BiometricsDto faceDto = biometricsDtos.toArray(new BiometricsDto[0])[0];
-					ConvertRequestDto convertRequestDto = new ConvertRequestDto();
-					convertRequestDto.setVersion("ISO19794_5_2011");
-					convertRequestDto.setInputBytes(faceDto.getAttributeISO());
-					STREAM_IMAGES.put(String.format("%s_%s_%s",
-							currentSubType, faceDto.getBioAttribute(), String.valueOf(retry)),
-							FaceDecoder.convertFaceISOToImageBytes(convertRequestDto));
-					BIO_SCORES.put(String.format("%s_%s_%s",
-							currentSubType, modalityName, String.valueOf(retry)),
-							faceDto.getQualityScore());
-					break;
-			}
+
+    private void addStreamImageAndScoreToCache(
+            String fieldId,
+            Modality modalityName,
+            Collection<BiometricsDto> biometricsDtos,
+            int retry) throws Exception {
+
+        try {
+            if (biometricsDtos == null || biometricsDtos.isEmpty()) {
+                LOGGER.warn(
+                        "No biometric data available for modality: {}",
+                        modalityName);
+                return;
+            }
+
+            double totalMdsScore = 0.0;
+            double totalSdkScore = 0.0;
+            int validScoreCount = 0;
+
+            boolean useSdkScore =
+                    isQualityCheckWithSdkEnabled()
+                            && isUseSdkQualityScoreEnabled();
+
+            LOGGER.info(
+                    "Individual score configuration: qualityCheckWithSdk={}, "
+                            + "replaceSdkQualityScore={}, useSdkScore={}",
+                    isQualityCheckWithSdkEnabled(),
+                    isUseSdkQualityScoreEnabled(),
+                    useSdkScore);
+
+            switch (modalityName) {
+
+                case FINGERPRINT_SLAB_LEFT:
+                case FINGERPRINT_SLAB_RIGHT:
+                case FINGERPRINT_SLAB_THUMBS: {
+
+                    for (BiometricsDto dto : biometricsDtos) {
+                        if (dto == null) {
+                            continue;
+                        }
+
+                        ConvertRequestDto convertRequestDto =
+                                new ConvertRequestDto();
+                        convertRequestDto.setVersion("ISO19794_4_2011");
+                        convertRequestDto.setInputBytes(dto.getAttributeISO());
+
+                        String imageKey = String.format(
+                                "%s_%s_%s",
+                                fieldId,
+                                dto.getBioAttribute(),
+                                retry);
+
+                        byte[] fingerprintImage =
+                                FingerDecoder.convertFingerISOToImageBytes(
+                                        convertRequestDto);
+
+                        if (fingerprintImage == null) {
+                            throw new IllegalStateException(
+                                    "Fingerprint decoder returned null for "
+                                            + dto.getBioAttribute());
+                        }
+
+                        STREAM_IMAGES.put(imageKey, fingerprintImage);
+
+                        double mdsScore = dto.getQualityScore();
+                        double sdkScore = dto.getSdkScore();
+
+                        double individualScore = useSdkScore
+                                ? sdkScore
+                                : mdsScore;
+
+                        // Store in the map read by getQualityScoreLabels().
+                        INDIVIDUAL_BIO_SCORE.put(
+                                imageKey, individualScore);
+
+                        totalMdsScore += mdsScore;
+                        totalSdkScore += sdkScore;
+                        validScoreCount++;
+
+                        LOGGER.info(
+                                "Operator fingerprint: attribute={}, MDS={}, "
+                                        + "SDK={}, displayed={}",
+                                dto.getBioAttribute(),
+                                mdsScore,
+                                sdkScore,
+                                individualScore);
+                    }
+                    break;
+                }
+
+                case IRIS_DOUBLE: {
+
+                    for (BiometricsDto dto : biometricsDtos) {
+                        if (dto == null) {
+                            continue;
+                        }
+
+                        ConvertRequestDto convertRequestDto =
+                                new ConvertRequestDto();
+                        convertRequestDto.setVersion("ISO19794_6_2011");
+                        convertRequestDto.setInputBytes(dto.getAttributeISO());
+
+                        String imageKey = String.format(
+                                "%s_%s_%s",
+                                fieldId,
+                                dto.getBioAttribute(),
+                                retry);
+
+                        byte[] irisImage =
+                                IrisDecoder.convertIrisISOToImageBytes(
+                                        convertRequestDto);
+
+                        if (irisImage == null) {
+                            throw new IllegalStateException(
+                                    "Iris decoder returned null for "
+                                            + dto.getBioAttribute());
+                        }
+
+                        STREAM_IMAGES.put(imageKey, irisImage);
+
+                        double mdsScore = dto.getQualityScore();
+                        double sdkScore = dto.getSdkScore();
+
+                        double individualScore = useSdkScore
+                                ? sdkScore
+                                : mdsScore;
+
+                        // Store the selected score for this eye.
+                        INDIVIDUAL_BIO_SCORE.put(
+                                imageKey, individualScore);
+
+                        totalMdsScore += mdsScore;
+                        totalSdkScore += sdkScore;
+                        validScoreCount++;
+
+                        LOGGER.info(
+                                "Operator iris: attribute={}, MDS={}, "
+                                        + "SDK={}, displayed={}",
+                                dto.getBioAttribute(),
+                                mdsScore,
+                                sdkScore,
+                                individualScore);
+                    }
+                    break;
+                }
+
+                case FACE:
+                case EXCEPTION_PHOTO: {
+
+                    BiometricsDto faceDto =
+                            biometricsDtos.iterator().next();
+
+                    if (faceDto == null) {
+                        throw new IllegalStateException(
+                                "Face biometric DTO is null");
+                    }
+
+                    ConvertRequestDto convertRequestDto =
+                            new ConvertRequestDto();
+                    convertRequestDto.setVersion("ISO19794_5_2011");
+                    convertRequestDto.setInputBytes(faceDto.getAttributeISO());
+
+                    String imageKey = String.format(
+                            "%s_%s_%s",
+                            fieldId,
+                            faceDto.getBioAttribute(),
+                            retry);
+
+                    byte[] faceImage =
+                            FaceDecoder.convertFaceISOToImageBytes(
+                                    convertRequestDto);
+
+                    if (faceImage == null) {
+                        throw new IllegalStateException(
+                                "Face decoder returned null for "
+                                        + faceDto.getBioAttribute());
+                    }
+
+                    STREAM_IMAGES.put(imageKey, faceImage);
+
+                    double mdsScore = faceDto.getQualityScore();
+                    double sdkScore = faceDto.getSdkScore();
+
+                    double individualScore = useSdkScore
+                            ? sdkScore
+                            : mdsScore;
+
+                    INDIVIDUAL_BIO_SCORE.put(
+                            imageKey, individualScore);
+
+                    totalMdsScore = mdsScore;
+                    totalSdkScore = sdkScore;
+                    validScoreCount = 1;
+
+                    LOGGER.info(
+                            "Operator face: attribute={}, MDS={}, "
+                                    + "SDK={}, displayed={}",
+                            faceDto.getBioAttribute(),
+                            mdsScore,
+                            sdkScore,
+                            individualScore);
+
+                    break;
+                }
+
+                default:
+                    LOGGER.warn(
+                            "Unsupported biometric modality: {}",
+                            modalityName);
+                    return;
+            }
+
+            if (validScoreCount == 0) {
+                LOGGER.warn(
+                        "No valid biometric DTOs processed for modality: {}",
+                        modalityName);
+                return;
+            }
+
+            double averageMdsScore =
+                    totalMdsScore / validScoreCount;
+            double averageSdkScore =
+                    totalSdkScore / validScoreCount;
+
+            double selectedScore = useSdkScore
+                    ? averageSdkScore
+                    : averageMdsScore;
+
+            String aggregateKey = String.format(
+                    "%s_%s_%s",
+                    fieldId,
+                    modalityName.name(),
+                    retry);
+
+
+            MDS_SCORES.put(aggregateKey, averageMdsScore);
+            SDK_SCORES.put(aggregateKey, averageSdkScore);
+            BIO_SCORES.put(aggregateKey, selectedScore);
+
+            LOGGER.info(
+                    "Operator scores cached: modality={}, averageMDS={}, "
+                            + "averageSDK={}, selected={}, useSDK={}",
+                    modalityName,
+                    averageMdsScore,
+                    averageSdkScore,
+                    selectedScore,
+                    useSdkScore);
+
 		} catch (Exception exception) {
 			LOGGER.error("Failed to extract image from ISO", exception);
 			throw exception;
@@ -1357,23 +1579,216 @@ public class BiometricsController extends BaseController /* implements Initializ
 		}*/
 	}
 
-	private void loadBiometricsUIElements(List<BiometricsDto> biometricDTOList, String subType, String modality) {
 
-		LOGGER.info(LOG_REG_BIOMETRIC_CONTROLLER, APPLICATION_NAME, APPLICATION_ID,
-				"Updating progress Bar,Text and attempts Box in UI");
+    private void loadBiometricsUIElements(
+            List<BiometricsDto> biometricDTOList,
+            String subType,
+            String modality) {
 
-		int retry = biometricDTOList.get(0).getNumOfRetries();
-		
-		double averageQualityScore = getAverageQualityScore(biometricDTOList);
-		int thresholdScore = getThresholdScoreInInt(getThresholdKeyByBioType(Modality.valueOf(modality)));
+        LOGGER.info(
+                LOG_REG_BIOMETRIC_CONTROLLER,
+                APPLICATION_NAME,
+                APPLICATION_ID,
+                "Updating progress Bar, Text and attempts Box in UI");
 
-		setCapturedValues(averageQualityScore, retry, thresholdScore);
+        if (biometricDTOList == null || biometricDTOList.isEmpty()) {
+            LOGGER.warn(
+                    "biometricDTOList is null or empty in loadBiometricsUIElements");
+            return;
+        }
 
-		// Get the stream image from Bio ServiceImpl and load it in the image pane
-		biometricImage.setImage(getBioStreamImage(subType, Modality.valueOf(modality), retry));
+        Modality bioModality = Modality.valueOf(modality);
+        int retry = biometricDTOList.get(0).getNumOfRetries();
 
-		boolean retryNeeded = averageQualityScore >= thresholdScore ? false : true;
-		addImageInUIPane(subType, modality, getBioStreamImage(subType, Modality.valueOf(modality), retry), true, retryNeeded);
+        // Use the same key as addStreamImageAndScoreToCache().
+        String scoreKey = String.format(
+                "%s_%s_%s",
+                subType,
+                modality,
+                retry);
+
+        // Read original MDS and SDK scores independently.
+        double averageMdsScore = MDS_SCORES.getOrDefault(scoreKey, 0.0);
+        double averageSdkScore = SDK_SCORES.getOrDefault(scoreKey, 0.0);
+
+        // Select the score used for Overall Quality and retry evaluation.
+        double selectedQualityScore =
+                isQualityCheckWithSdkEnabled()
+                        && isUseSdkQualityScoreEnabled()
+                        ? averageSdkScore
+                        : averageMdsScore;
+
+        System.out.println(
+                "SCORE BEFORE UI: key=" + scoreKey
+                        + ", MDS=" + averageMdsScore
+                        + ", SDK=" + averageSdkScore
+                        + ", selected=" + selectedQualityScore);
+
+        // Fetch the configured quality threshold.
+        double thresholdScore =
+                bioService.getMDMQualityThreshold(bioModality);
+
+        // Pass original MDS and SDK values separately.
+        setCapturedValues(
+                averageMdsScore,
+                averageSdkScore,
+                retry,
+                thresholdScore);
+
+        // Update the main modality image.
+        Image bioImage = getBioStreamImage(
+                subType,
+                bioModality,
+                retry);
+
+        biometricImage.setImage(bioImage);
+
+        // Render individual finger/eye badges.
+        displayIndividualBioScore(
+                subType,
+                bioModality,
+                retry);
+
+        // Retry evaluation follows the configured selected score.
+        boolean retryNeeded =
+                selectedQualityScore < thresholdScore;
+
+        // Update side thumbnail / navigation pane.
+        addImageInUIPane(
+                subType,
+                modality,
+                bioImage,
+                true,
+                retryNeeded);
+    }
+
+
+    public boolean isDisplayIndividualBioScoreRequired() {
+
+        String configValue = String.valueOf(
+                ApplicationContext.map().get(
+                        RegistrationConstants.DISPLAY_INDIVIDUAL_BIO_SCORE));
+
+        return !"F".equals(configValue);
+    }
+
+    private void displayIndividualBioScore(
+            String fieldId,
+            Modality modality,
+            int retry) {
+
+        if (isDisplayIndividualBioScoreRequired()
+                && modality != Modality.EXCEPTION_PHOTO) {
+
+            biometricPane.getChildren().clear();
+
+            StackPane stackPane = new StackPane();
+
+            stackPane.getChildren().add(biometricImage);
+
+            HBox qualityBox = new HBox();
+
+            StackPane.setAlignment(
+                    qualityBox,
+                    Pos.TOP_CENTER);
+
+            qualityBox.getStyleClass().add(
+                    "individual-quality-box");
+
+            qualityBox.setPrefHeight(50);
+            qualityBox.setMaxHeight(
+                    Region.USE_PREF_SIZE);
+
+            qualityBox.setPrefWidth(500);
+            qualityBox.setMaxWidth(
+                    Region.USE_PREF_SIZE);
+
+            getQualityScoreLabels(
+                    fieldId,
+                    modality,
+                    retry,
+                    qualityBox);
+
+            stackPane.getChildren().add(
+                    qualityBox);
+
+            biometricPane.getChildren().add(
+                    stackPane);
+
+        } else {
+
+            biometricPane.getChildren().clear();
+
+            biometricPane.getChildren().add(
+                    biometricImage);
+        }
+    }
+
+
+    private void getQualityScoreLabels(
+            String fieldId,
+            Modality modality,
+            int attempt,
+            HBox qualityBox) {
+
+        addSpacer(qualityBox, modality);
+
+        double thresholdValue =
+                bioService.getMDMQualityThreshold(modality);
+
+        for (String attribute : modality.getAttributes()) {
+
+            String key = String.format(
+                    "%s_%s_%s",
+                    fieldId,
+                    attribute,
+                    attempt);
+
+            Double score = INDIVIDUAL_BIO_SCORE.get(key);
+
+            if (score == null) {
+                score = 0.0;
+            }
+
+            // Debug: verify which score is being displayed
+            System.out.println(
+                    "INDIVIDUAL SCORE DISPLAY: key=" + key
+                            + ", score=" + score
+                            + ", threshold=" + thresholdValue);
+
+            String scoreStyleClass = "green-rounded-label";
+
+            if (score.equals(0.0)) {
+                scoreStyleClass = "white-rounded-label";
+            } else if (score < thresholdValue) {
+                scoreStyleClass = "red-rounded-label";
+            }
+
+            Label label = new Label(String.valueOf(score));
+            label.getStyleClass().add(scoreStyleClass);
+
+            qualityBox.getChildren().add(label);
+
+            addSpacer(qualityBox, modality);
+        }
+    }
+
+
+    private void addSpacer(
+            HBox qualityBox,
+            Modality modality) {
+
+        if (modality != Modality.FACE) {
+
+            Region spacer = new Region();
+
+            HBox.setHgrow(
+                    spacer,
+                    Priority.ALWAYS);
+
+            qualityBox.getChildren().add(
+                    spacer);
+        }
 	}
 
 	private double getAverageQualityScore(List<BiometricsDto> biometricDTOList) {
@@ -1471,9 +1886,7 @@ public class BiometricsController extends BaseController /* implements Initializ
 			threshold = getValueFromApplicationContext(biometricThreshold);
 		}
 
-		double qualityScore = threshold == null || threshold.isEmpty() ? 0 : Double.parseDouble(threshold);
 
-		thresholdScoreLabel.setText(getQualityScoreText(qualityScore));
 		createQualityBox(retryCount, biometricThreshold);
 
 		clearBioLabels();
@@ -1487,7 +1900,9 @@ public class BiometricsController extends BaseController /* implements Initializ
 				"Updated biometrics and cleared previous data");
 	}
 
-	private void clearBioLabels() {
+    private void clearBioLabels() {
+        biometricPane.getChildren().clear();
+        biometricPane.getChildren().add(biometricImage);
 		clearCaptureData();
 		biometricPane.getStyleClass().clear();
 		biometricPane.getStyleClass().add(RegistrationConstants.BIOMETRIC_PANES_SELECTED);
@@ -1495,14 +1910,28 @@ public class BiometricsController extends BaseController /* implements Initializ
 //		attemptSlap.setText(RegistrationConstants.HYPHEN);
 		// duplicateCheckLbl.setText(RegistrationConstants.EMPTY);
 
+        thresholdScoreLabel.setText("0%");
+        qualityScore.setText("0%");
 		retryBox.setVisible(true);
 		biometricBox.setVisible(true);
 
 		bioProgress.setProgress(0);
-		qualityText.setText("");
+        qualityText.setText("0%");
 
-	}
-	
+    }
+
+    public boolean isQualityCheckWithSdkEnabled() {
+        return RegistrationConstants.ENABLE.equalsIgnoreCase((String) ApplicationContext.map()
+                .getOrDefault(RegistrationConstants.QUALITY_CHECK_WITH_SDK, RegistrationConstants.DISABLE));
+    }
+
+
+    @Value("${" + RegistrationConstants.UPDATE_SDK_QUALITY_SCORE + ":N}")
+    private String useSdkQualityScore;
+
+    private boolean isUseSdkQualityScoreEnabled() {
+        return RegistrationConstants.ENABLE.equalsIgnoreCase(useSdkQualityScore);
+    }
 	/**
 	 * Updating captured values
 	 *
@@ -1510,22 +1939,27 @@ public class BiometricsController extends BaseController /* implements Initializ
 	 * @param retry          retrycount
 	 * @param thresholdValue threshold value
 	 */
-	private void setCapturedValues(double qltyScore, int retry, double thresholdValue) {
+    private void setCapturedValues(double qltyScore,double sdkScore, int retry, double thresholdValue) {
 
 		LOGGER.info(LOG_REG_BIOMETRIC_CONTROLLER, APPLICATION_NAME, APPLICATION_ID,
 				"Updating captured values of biometrics");
 
+        double selectedScore = isQualityCheckWithSdkEnabled() && isUseSdkQualityScoreEnabled()
+                ? sdkScore
+                : qltyScore;
 		biometricPane.getStyleClass().clear();
 		biometricPane.getStyleClass().add(RegistrationConstants.FINGERPRINT_PANES_SELECTED);
-		qualityScore.setText(getQualityScoreText(qltyScore));
+        thresholdScoreLabel.setText(getQualityScoreText(qltyScore));
+        qualityScore.setText(getQualityScoreText(sdkScore));
 //		attemptSlap.setText(String.valueOf(retry));
 
-		bioProgress.setProgress(
-				Double.valueOf(getQualityScoreText(qltyScore).split(RegistrationConstants.PERCENTAGE)[0]) / 100);
-		qualityText.setText(getQualityScoreText(qltyScore));
+        bioProgress.setProgress(
+                Double.valueOf(getQualityScoreText(selectedScore).split(RegistrationConstants.PERCENTAGE)[0]) / 100);
+        qualityText.setText(getQualityScoreText(selectedScore));
 
 		retry = retry == 0 ? 1 : retry;
-		if (Double.valueOf(getQualityScoreText(qltyScore).split(RegistrationConstants.PERCENTAGE)[0]) >= thresholdValue) {
+
+        if (Double.valueOf(getQualityScoreText(selectedScore).split(RegistrationConstants.PERCENTAGE)[0]) >= thresholdValue) {
 			clearAttemptsBox(RegistrationConstants.QUALITY_LABEL_GREEN, retry);
 			bioProgress.getStyleClass().removeAll(RegistrationConstants.PROGRESS_BAR_RED);
 			bioProgress.getStyleClass().add(RegistrationConstants.PROGRESS_BAR_GREEN);
