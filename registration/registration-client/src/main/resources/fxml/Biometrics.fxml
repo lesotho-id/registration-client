@@ -156,8 +156,8 @@
                                     </GridPane>
                                     <GridPane fx:id="thresholdBox" GridPane.rowIndex="4">
                                        <children>
-                                          <Label styleClass="threshHoldLabel" text="%threshold" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.halignment="LEFT" />
-                                          <Label styleClass="qualityLabel" text="%quality" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.halignment="LEFT" />
+                                          <Label styleClass="threshHoldLabel" text="MDS QUALITY" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.halignment="LEFT" />
+                                          <Label styleClass="qualityLabel" text="SDK QUALITY" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.halignment="LEFT" />
                                           <Label fx:id="thresholdScoreLabel" GridPane.halignment="LEFT" GridPane.rowIndex="1" />
                                           <Label fx:id="qualityScore" GridPane.columnIndex="1" GridPane.halignment="LEFT" GridPane.rowIndex="1" />
                                        </children>

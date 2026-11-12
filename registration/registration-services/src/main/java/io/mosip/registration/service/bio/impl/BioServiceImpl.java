@@ -14,6 +14,7 @@ import io.mosip.registration.service.IdentitySchemaService;
 import lombok.NonNull;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.mosip.commons.packet.constants.Biometric;
@@ -68,6 +69,12 @@ public class BioServiceImpl extends BaseService implements BioService {
 	@Autowired
 	private BIRBuilder birBuilder;
 
+    @Value("${mosip.registration.use_sdk_quality_score:Y}")
+    private String useSdkQualityScore;
+
+    private boolean isUseSdkQualityScoreEnabled() {
+        return RegistrationConstants.ENABLE.equalsIgnoreCase(useSdkQualityScore);
+    }
 	/**
 	 * Gets the registration DTO from session.
 	 *
@@ -93,12 +100,16 @@ public class BioServiceImpl extends BaseService implements BioService {
 					continue;
 				}
 
-				if (!ValueRange.of(0, RegistrationConstants.MAX_BIO_QUALITY_SCORE).isValidValue((long) biometricsDto.getQualityScore()))
-					throw new RegBaseCheckedException(RegistrationExceptionConstants.REG_BIOMETRIC_QUALITY_SCORE_RANGE_ERROR.getErrorCode(),
-							RegistrationExceptionConstants.REG_BIOMETRIC_QUALITY_SCORE_RANGE_ERROR.getErrorMessage());
+                if (!ValueRange.of(0, RegistrationConstants.MAX_BIO_QUALITY_SCORE).isValidValue((long) biometricsDto.getQualityScore())) {
+                    throw new RegBaseCheckedException(RegistrationExceptionConstants.REG_BIOMETRIC_QUALITY_SCORE_RANGE_ERROR.getErrorCode(),
+                            RegistrationExceptionConstants.REG_BIOMETRIC_QUALITY_SCORE_RANGE_ERROR.getErrorMessage());
+                }
 
-				if (RegistrationConstants.ENABLE.equalsIgnoreCase((String) ApplicationContext.map()
-						.getOrDefault(RegistrationConstants.QUALITY_CHECK_WITH_SDK, RegistrationConstants.DISABLE))) {
+                String qualityCheckFlag = (String) ApplicationContext.map()
+                        .getOrDefault(RegistrationConstants.QUALITY_CHECK_WITH_SDK, RegistrationConstants.DISABLE);
+                if (RegistrationConstants.ENABLE.equalsIgnoreCase((String) ApplicationContext.map()
+                        .getOrDefault(RegistrationConstants.QUALITY_CHECK_WITH_SDK, RegistrationConstants.DISABLE))
+                ) {
 					try {
 						biometricsDto.setSdkScore(getSDKScore(biometricsDto));
 					} catch (BiometricException e) {
@@ -171,6 +182,7 @@ public class BioServiceImpl extends BaseService implements BioService {
 				.getBioProvider(biometricType, BiometricFunction.QUALITY_CHECK)
 				.getModalityQuality(birList, null);
 		
+        Float sdkScore = scoreMap != null ? scoreMap.get(biometricType) : null;
 		return scoreMap.get(biometricType);
 	}
 
