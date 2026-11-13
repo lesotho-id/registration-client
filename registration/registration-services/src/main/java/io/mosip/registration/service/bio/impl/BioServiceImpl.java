@@ -183,7 +183,9 @@ public class BioServiceImpl extends BaseService implements BioService {
 				.getModalityQuality(birList, null);
 		
         Float sdkScore = scoreMap != null ? scoreMap.get(biometricType) : null;
-		return scoreMap.get(biometricType);
+        LOGGER.info("SDK quality score | bioAttribute={} | biometricType={} | score={}",
+                bioAttribute, biometricType, sdkScore);
+        return sdkScore;
 	}
 
 	@Override
